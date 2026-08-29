@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useAuthStore } from '../stores/auth'
 
 const emit = defineEmits(['go-to-register', 'go-to-home', 'login-success'])
 
@@ -10,31 +11,45 @@ const password = ref('')
 const rememberMe = ref(false)
 const otpDigits = ref(['', '', '', '', '', ''])
 const errorMessage = ref('')
-
-const fetchLoginConfig = async () => {
-  return {
-    allowPasswordReset: true,
-    ssoEnabled: false
-  }
-}
+const authStore = useAuthStore()
 
 onMounted(async () => {
-  await fetchLoginConfig()
   // Vider explicitement les champs pour contourner l'autofill agressif des navigateurs
   email.value = ''
   password.value = ''
 })
 
-// Étape 1 : Saisie des identifiants et envoi du code par mail
-const handleLogin = () => {
+// Étape 1 : Saisie des identifiants et envoi à l'API
+const handleLogin = async () => {
   errorMessage.value = ''
   if (!email.value || !password.value) {
-    alert('Veuillez remplir tous les champs.')
+    errorMessage.value = 'Veuillez remplir tous les champs.'
     return
   }
 
-  // Passage à l'étape du code de vérification e-mail
-  step.value = 'otp'
+  try {
+    const data = await authStore.login({
+      email: email.value,
+      password: password.value
+    })
+    
+    // Si la connexion réussit directement, on émet le succès
+    emit('login-success', data.user)
+    
+  } catch (error) {
+    if (error.response) {
+      if (error.response.status === 401) {
+        errorMessage.value = 'Email ou mot de passe incorrect.'
+      } else if (error.response.status === 403 && error.response.data.email_not_verified) {
+        // L'email n'est pas vérifié, le backend a envoyé un OTP
+        step.value = 'otp'
+      } else {
+        errorMessage.value = error.response.data.message || 'Une erreur est survenue.'
+      }
+    } else {
+      errorMessage.value = 'Erreur réseau.'
+    }
+  }
 }
 
 // Gestion de la saisie fluide casier par casier
@@ -47,24 +62,24 @@ const handleOtpInput = (index, event) => {
 }
 
 // Étape 2 : Confirmation du code à 6 chiffres
-const handleVerifyOtp = () => {
+const handleVerifyOtp = async () => {
   const code = otpDigits.value.join('')
   if (code.length < 6) {
     errorMessage.value = 'Veuillez saisir le code complet à 6 chiffres.'
     return
   }
-
-  emit('login-success', {
-    email: email.value.trim().toLowerCase(),
-    password: password.value,
-    rememberMe: rememberMe.value,
-    otpCode: code
-  })
-
-  email.value = ''
-  password.value = ''
-  otpDigits.value = ['', '', '', '', '', '']
-  step.value = 'credentials'
+  
+  try {
+    await authStore.verifyOtp(email.value, code)
+    // Après vérification, on essaie de se reconnecter
+    const data = await authStore.login({
+      email: email.value,
+      password: password.value
+    })
+    emit('login-success', data.user)
+  } catch (error) {
+    errorMessage.value = error.response?.data?.message || 'Code OTP invalide.'
+  }
 }
 </script>
 

@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useAuthStore } from '../stores/auth'
 
 const emit = defineEmits(['go-to-login', 'go-to-home', 'register-success'])
 
@@ -17,22 +18,30 @@ const departmentOptions = ref([])
 // Saisie des cases OTP par mail
 const otpDigits = ref(['', '', '', '', '', ''])
 const otpError = ref('')
+const errorMessage = ref('')
+const authStore = useAuthStore()
+
+// Dictionnaire pour mapper les sélections aux valeurs attendues par l'API
+const roleMap = {
+  'Employé (CDI / CDD)': 'employe',
+  'Stagiaire / Alternant': 'employe',
+  'Prestataire / Consultant': 'employe',
+  "Manager d'équipe": 'manager',
+  'Administrateur RH': 'admin_rh'
+}
+
+const deptMap = {
+  'IT / Tech': 1,
+  'Ressources Humaines': 2,
+  'Marketing & Ventes': 3,
+  'Finance & Admin': 4
+}
 
 // Fonction de récupération des options
 const fetchFormOptions = async () => {
   return {
-    roles: [
-      'Employé (CDI / CDD)',
-      'Stagiaire / Alternant',
-      'Prestataire / Consultant',
-      'Manager d\'équipe'
-    ],
-    departments: [
-      'IT / Tech',
-      'Ressources Humaines',
-      'Marketing & Ventes',
-      'Finance & Admin'
-    ]
+    roles: Object.keys(roleMap),
+    departments: Object.keys(deptMap)
   }
 }
 
@@ -58,6 +67,7 @@ const resetForm = () => {
   acceptTerms.value = false
   otpDigits.value = ['', '', '', '', '', '']
   otpError.value = ''
+  errorMessage.value = ''
   step.value = 'form'
 }
 
@@ -74,13 +84,38 @@ onMounted(async () => {
 })
 
 // Passage à l'étape OTP
-const handleRegisterSubmit = () => {
+const handleRegisterSubmit = async () => {
+  errorMessage.value = ''
   if (password.value !== confirmPassword.value) {
-    alert('Les mots de passe ne correspondent pas.')
+    errorMessage.value = 'Les mots de passe ne correspondent pas.'
     return
   }
 
-  step.value = 'otp'
+  try {
+    const payload = {
+      nom: lastName.value,
+      prenom: firstName.value,
+      email: email.value,
+      password: password.value,
+      password_confirmation: confirmPassword.value,
+      role: roleMap[role.value] || 'employe',
+      statut_contrat: role.value,
+      departement_id: deptMap[department.value] || 1,
+      date_arrivee: arrivalDate.value
+    }
+    
+    await authStore.register(payload)
+    step.value = 'otp'
+  } catch (error) {
+    if (error.response?.data?.errors) {
+      // Afficher la première erreur de validation
+      const errors = error.response.data.errors
+      const firstKey = Object.keys(errors)[0]
+      errorMessage.value = errors[firstKey][0]
+    } else {
+      errorMessage.value = error.response?.data?.message || 'Erreur lors de l\'inscription.'
+    }
+  }
 }
 
 // Gestion automatique du focus des 6 cases
@@ -93,25 +128,23 @@ const handleOtpInput = (index, event) => {
 }
 
 // Validation finale par code mail
-const handleVerifyOtpAndRegister = () => {
+const handleVerifyOtpAndRegister = async () => {
   const code = otpDigits.value.join('')
+  otpError.value = ''
+  
   if (code.length < 6) {
     otpError.value = 'Veuillez saisir le code complet à 6 chiffres.'
     return
   }
 
-  // Émission de l'événement vers le parent avec les données
-  emit('register-success', {
-    lastName: lastName.value,
-    firstName: firstName.value,
-    email: email.value.trim().toLowerCase(),
-    role: role.value,
-    department: department.value,
-    arrivalDate: arrivalDate.value,
-    otpCode: code
-  })
-
-  resetForm()
+  try {
+    await authStore.verifyOtp(email.value, code)
+    // Émission de l'événement vers le parent
+    emit('register-success', { email: email.value })
+    resetForm()
+  } catch (error) {
+    otpError.value = error.response?.data?.message || 'Code OTP invalide.'
+  }
 }
 </script>
 
