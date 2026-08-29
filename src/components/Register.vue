@@ -1,7 +1,15 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import {
+  ArrowLeftIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  InformationCircleIcon,
+  ExclamationTriangleIcon
+} from '@heroicons/vue/24/outline'
 
-const emit = defineEmits(['go-to-login', 'go-to-home', 'register-success'])
+// Déclaration explicite des événements envoyés au composant parent (App.vue)
+const emit = defineEmits(['go-to-login', 'go-home', 'register-success'])
 
 // Gestion des étapes : 'form' (saisie) -> 'otp' (cases de vérification mail)
 const step = ref('form')
@@ -116,7 +124,7 @@ const handleVerifyOtpAndRegister = () => {
 </script>
 
 <template>
-  <div class="min-h-screen relative flex flex-col items-center justify-center p-4 py-12 text-slate-100 overflow-hidden">
+  <div class="min-h-screen relative flex flex-col items-center justify-center p-4 py-12 text-slate-100 font-sans overflow-hidden">
     
     <!-- 1. Image d'arrière-plan "Modern Corporate" -->
     <div 
@@ -133,9 +141,9 @@ const handleVerifyOtpAndRegister = () => {
       <!-- Bouton Retour à l'accueil -->
       <button 
         type="button"
-        @click="$emit('go-to-home')" 
+        @click="emit('go-home')" 
         class="self-start w-full text-slate-400 hover:text-white text-sm flex items-center space-x-2 mb-4 transition cursor-pointer">
-        <span>←</span>
+        <ArrowLeftIcon class="w-4 h-4" />
         <span>Retour à l'accueil</span>
       </button>
 
@@ -237,13 +245,8 @@ const handleVerifyOtpAndRegister = () => {
                 @click="showPassword = !showPassword" 
                 class="absolute right-4 text-slate-400 hover:text-white transition focus:outline-none cursor-pointer"
               >
-                <svg v-if="!showPassword" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                <svg v-else class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a10.04 10.04 0 013.98-.863c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m-6.19-6.19a3 3 0 004.243 4.243M3 3l18 18" />
-                </svg>
+                <EyeSlashIcon v-if="!showPassword" class="w-5 h-5" />
+                <EyeIcon v-else class="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -265,13 +268,8 @@ const handleVerifyOtpAndRegister = () => {
                 @click="showConfirmPassword = !showConfirmPassword" 
                 class="absolute right-4 text-slate-400 hover:text-white transition focus:outline-none cursor-pointer"
               >
-                <svg v-if="!showConfirmPassword" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                <svg v-else class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a10.04 10.04 0 013.98-.863c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m-6.19-6.19a3 3 0 004.243 4.243M3 3l18 18" />
-                </svg>
+                <EyeSlashIcon v-if="!showConfirmPassword" class="w-5 h-5" />
+                <EyeIcon v-else class="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -299,7 +297,10 @@ const handleVerifyOtpAndRegister = () => {
             Un code de vérification à 6 chiffres a été envoyé à <br/><strong class="text-indigo-400">{{ email }}</strong>
           </p>
 
-          <p v-if="otpError" class="text-xs text-red-400 font-medium">⚠️ {{ otpError }}</p>
+          <p v-if="otpError" class="text-xs text-rose-400 font-medium flex items-center justify-center gap-1.5">
+            <ExclamationTriangleIcon class="w-4 h-4" />
+            <span>{{ otpError }}</span>
+          </p>
 
           <div class="flex justify-center gap-2">
             <input 
@@ -333,14 +334,14 @@ const handleVerifyOtpAndRegister = () => {
         <!-- Lien Se connecter -->
         <p v-if="step === 'form'" class="text-slate-400 text-sm mt-6 text-center">
           Déjà un compte ? 
-          <button type="button" @click="$emit('go-to-login')" class="text-indigo-400 hover:underline font-semibold ml-1 cursor-pointer">
+          <button type="button" @click="emit('go-to-login')" class="text-indigo-400 hover:underline font-semibold ml-1 cursor-pointer">
             Se connecter
           </button>
         </p>
 
         <!-- Encadré d'information RH -->
         <div class="mt-6 p-4 rounded-xl bg-slate-900/90 border border-indigo-500/30 flex items-start space-x-3">
-          <span class="text-indigo-400 text-lg">ℹ️</span>
+          <InformationCircleIcon class="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
           <p class="text-xs text-slate-400 leading-relaxed">
             Le compte est créé en statut <span class="text-indigo-300 font-bold">« En attente »</span> : un code de vérification est envoyé par email, puis le <span class="text-indigo-300 font-bold">service RH valide</span> le compte et attribue le rôle. Aucun accès au portail avant validation.
           </p>

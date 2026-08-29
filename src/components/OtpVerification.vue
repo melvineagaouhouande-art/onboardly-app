@@ -1,5 +1,10 @@
 <script setup>
 import { ref, reactive, onMounted, nextTick } from 'vue'
+import {
+  LockClosedIcon,
+  ArrowLeftIcon,
+  BoltIcon
+} from '@heroicons/vue/24/outline'
 
 const emit = defineEmits(['verify', 'resend', 'back'])
 
@@ -116,8 +121,8 @@ const handleResend = () => {
       
       <!-- LOGO ET TÊTE DE CARTE -->
       <div class="flex flex-col items-center text-center space-y-3">
-        <div class="w-14 h-14 rounded-2xl bg-indigo-600/10 border border-indigo-500/30 flex items-center justify-center text-2xl shadow-lg shadow-indigo-500/10">
-          🔐
+        <div class="w-14 h-14 rounded-2xl bg-indigo-600/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-lg shadow-indigo-500/10">
+          <LockClosedIcon class="w-7 h-7" />
         </div>
         <h1 class="text-2xl font-black text-white tracking-tight">Double Authentification</h1>
         <p class="text-xs text-slate-400 max-w-xs">
@@ -182,17 +187,19 @@ const handleResend = () => {
 
         <button 
           @click="emit('back')" 
-          class="text-slate-500 hover:text-slate-300 transition flex items-center gap-1 text-[11px] cursor-pointer mt-2"
+          class="text-slate-500 hover:text-slate-300 transition flex items-center gap-1.5 text-[11px] cursor-pointer mt-2"
         >
-          ← Retour à la connexion
+          <ArrowLeftIcon class="w-3.5 h-3.5" />
+          <span>Retour à la connexion</span>
         </button>
       </div>
 
     </div>
 
     <!-- PIED DE PAGE -->
-    <div class="absolute bottom-4 text-center text-[11px] text-slate-600">
-      ⚡ © 2026 <strong>Melvine</strong> · Onboardly Security System
+    <div class="absolute bottom-4 text-center text-[11px] text-slate-600 flex items-center gap-1.5">
+      <BoltIcon class="w-3.5 h-3.5 text-indigo-500 fill-indigo-500/20" />
+      <span>© 2026 <strong>Melvine</strong> · Onboardly Security System</span>
     </div>
 
   </div>

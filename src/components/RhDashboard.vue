@@ -4,6 +4,26 @@ import ParcoursManagement from './ParcoursManagement.vue'
 import EmployeeBadges from './EmployeeBadges.vue'
 import EmployeeDashboard from './EmployeeDashboard.vue'
 
+// Importation des icônes Heroicons pour remplacer tous les émojis
+import {
+  BoltIcon,
+  ChartBarIcon,
+  Cog6ToothIcon,
+  TrophyIcon,
+  UserGroupIcon,
+  BellIcon,
+  DocumentTextIcon,
+  ArrowLeftOnRectangleIcon,
+  ArrowDownTrayIcon,
+  DocumentArrowDownIcon,
+  ExclamationTriangleIcon,
+  EyeIcon,
+  XMarkIcon,
+  WrenchScrewdriverIcon,
+  CheckCircleIcon,
+  ClockIcon
+} from '@heroicons/vue/24/outline'
+
 const props = defineProps({
   currentUser: {
     type: Object,
@@ -49,7 +69,9 @@ const employees = ref([
         <!-- Logo Header -->
         <div class="p-6">
           <div class="flex items-center space-x-2">
-            <span class="text-indigo-500 text-xl font-black">⚡</span>
+            <div class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/30">
+              <BoltIcon class="w-4 h-4 fill-white" />
+            </div>
             <span class="text-xl font-black tracking-wider text-white">Onboardly</span>
           </div>
           <p class="text-[11px] text-slate-500 font-semibold mt-1">Espace Administrateur RH</p>
@@ -62,7 +84,7 @@ const employees = ref([
             :class="activeMenu === 'dashboard' ? 'bg-indigo-600/20 text-white font-medium' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'"
             class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition cursor-pointer"
           >
-            <span>📊</span>
+            <ChartBarIcon class="w-5 h-5 text-indigo-400 shrink-0" />
             <span>Tableau de bord</span>
           </button>
 
@@ -71,7 +93,7 @@ const employees = ref([
             :class="activeMenu === 'quests' ? 'bg-indigo-600/20 text-white font-medium' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'"
             class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition cursor-pointer"
           >
-            <span>⚙️</span>
+            <Cog6ToothIcon class="w-5 h-5 text-indigo-400 shrink-0" />
             <span>Parcours & Quêtes</span>
           </button>
 
@@ -80,7 +102,7 @@ const employees = ref([
             :class="activeMenu === 'badges' ? 'bg-indigo-600/20 text-white font-medium' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'"
             class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition cursor-pointer"
           >
-            <span>🏆</span>
+            <TrophyIcon class="w-5 h-5 text-indigo-400 shrink-0" />
             <span>Badges & Récompenses</span>
           </button>
 
@@ -89,7 +111,7 @@ const employees = ref([
             :class="activeMenu === 'users' ? 'bg-indigo-600/20 text-white font-medium' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'"
             class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition cursor-pointer"
           >
-            <span>👥</span>
+            <UserGroupIcon class="w-5 h-5 text-indigo-400 shrink-0" />
             <span>Utilisateurs</span>
           </button>
 
@@ -98,7 +120,7 @@ const employees = ref([
             :class="activeMenu === 'alerts' ? 'bg-indigo-600/20 text-white font-medium' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'"
             class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition cursor-pointer"
           >
-            <span>🔔</span>
+            <BellIcon class="w-5 h-5 text-indigo-400 shrink-0" />
             <span>Alertes</span>
           </button>
 
@@ -107,7 +129,7 @@ const employees = ref([
             :class="activeMenu === 'reports' ? 'bg-indigo-600/20 text-white font-medium' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'"
             class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition cursor-pointer"
           >
-            <span>📄</span>
+            <DocumentTextIcon class="w-5 h-5 text-indigo-400 shrink-0" />
             <span>Rapports</span>
           </button>
 
@@ -116,7 +138,7 @@ const employees = ref([
             :class="activeMenu === 'settings' ? 'bg-indigo-600/20 text-white font-medium' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'"
             class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm transition cursor-pointer"
           >
-            <span>⚙️</span>
+            <Cog6ToothIcon class="w-5 h-5 text-indigo-400 shrink-0" />
             <span>Paramètres</span>
           </button>
         </nav>
@@ -133,8 +155,8 @@ const employees = ref([
             <span class="text-[11px] text-slate-400 font-medium">Admin RH</span>
           </div>
         </div>
-        <button @click="$emit('logout')" class="text-slate-500 hover:text-rose-400 text-xs transition cursor-pointer" title="Déconnexion">
-          🚪
+        <button @click="$emit('logout')" class="text-slate-500 hover:text-rose-400 transition cursor-pointer p-1" title="Déconnexion">
+          <ArrowLeftOnRectangleIcon class="w-5 h-5" />
         </button>
       </div>
     </aside>
@@ -148,17 +170,20 @@ const employees = ref([
         <div class="flex items-center justify-between">
           <div>
             <h1 class="text-2xl font-bold flex items-center gap-2 text-white">
-              <span>📈</span> Analytics — Vue d'ensemble
+              <ChartBarIcon class="w-7 h-7 text-indigo-400" />
+              <span>Analytics — Vue d'ensemble</span>
             </h1>
             <p class="text-xs text-slate-400 mt-0.5">Suivi en temps réel des intégrations</p>
           </div>
 
           <div class="flex gap-3">
             <button class="px-4 py-2 bg-[#1e293b]/70 hover:bg-[#1e293b] border border-slate-700/60 rounded-xl text-xs font-semibold text-slate-200 flex items-center gap-2 transition cursor-pointer">
-              <span>📄</span> Exporter PDF
+              <DocumentArrowDownIcon class="w-4 h-4 text-slate-400" />
+              <span>Exporter PDF</span>
             </button>
             <button class="px-4 py-2 bg-[#1e293b]/70 hover:bg-[#1e293b] border border-slate-700/60 rounded-xl text-xs font-semibold text-slate-200 flex items-center gap-2 transition cursor-pointer">
-              <span>📊</span> Exporter Excel
+              <ArrowDownTrayIcon class="w-4 h-4 text-slate-400" />
+              <span>Exporter Excel</span>
             </button>
           </div>
         </div>
@@ -189,7 +214,7 @@ const employees = ref([
         <!-- Bandeau d'alerte Retards -->
         <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 text-xs font-medium text-amber-300 flex items-center justify-between">
           <div class="flex items-center space-x-2">
-            <span>⚠️</span>
+            <ExclamationTriangleIcon class="w-5 h-5 text-amber-400 shrink-0" />
             <span><strong>5 employés</strong> ont des quêtes en retard de plus de 3 jours</span>
           </div>
           <button @click="activeMenu = 'alerts'" class="hover:underline font-bold cursor-pointer">Voir les alertes →</button>
@@ -201,7 +226,8 @@ const employees = ref([
           <!-- Graphique 1 : Taux de complétion par parcours -->
           <div class="bg-[#131b2e]/60 border border-slate-800/80 rounded-2xl p-6 shadow-lg">
             <h3 class="text-sm font-bold text-white flex items-center gap-2 mb-6">
-              <span>📊</span> Taux de complétion par parcours
+              <ChartBarIcon class="w-4 h-4 text-indigo-400" />
+              <span>Taux de complétion par parcours</span>
             </h3>
             
             <div class="bg-[#0b0f19]/80 rounded-xl p-6 h-52 flex items-end justify-between gap-4">
@@ -240,7 +266,8 @@ const employees = ref([
           <!-- Graphique 2 : Évolution engagement -->
           <div class="bg-[#131b2e]/60 border border-slate-800/80 rounded-2xl p-6 shadow-lg">
             <h3 class="text-sm font-bold text-white flex items-center gap-2 mb-6">
-              <span>📈</span> Évolution engagement (4 semaines)
+              <ChartBarIcon class="w-4 h-4 text-indigo-400" />
+              <span>Évolution engagement (4 semaines)</span>
             </h3>
 
             <div class="bg-[#0b0f19]/80 rounded-xl p-6 h-52 flex flex-col justify-between relative overflow-hidden">
@@ -274,7 +301,8 @@ const employees = ref([
         <!-- Tableau : Progression par employé -->
         <div class="bg-[#131b2e]/60 border border-slate-800/80 rounded-2xl p-6 shadow-lg">
           <h3 class="text-sm font-bold text-white flex items-center gap-2 mb-6">
-            <span>👥</span> Progression par employé (top 10)
+            <UserGroupIcon class="w-4 h-4 text-indigo-400" />
+            <span>Progression par employé (top 10)</span>
           </h3>
 
           <div class="overflow-x-auto">
@@ -307,9 +335,15 @@ const employees = ref([
                   <td class="py-4 text-slate-300 font-mono">{{ emp.quests }}</td>
                   <td class="py-4 text-slate-300 font-bold font-mono">{{ emp.points }}</td>
                   <td class="py-4">
-                    <span v-if="emp.status === 'check'" class="w-6 h-6 inline-flex items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400 text-xs">✅</span>
-                    <span v-else-if="emp.status === 'wait'" class="w-6 h-6 inline-flex items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-400 text-xs">⏳</span>
-                    <span v-else-if="emp.status === 'alert'" class="w-6 h-6 inline-flex items-center justify-center rounded-lg bg-rose-500/20 text-rose-400 text-xs">⚠️</span>
+                    <span v-if="emp.status === 'check'" class="w-6 h-6 inline-flex items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
+                      <CheckCircleIcon class="w-4 h-4" />
+                    </span>
+                    <span v-else-if="emp.status === 'wait'" class="w-6 h-6 inline-flex items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-400">
+                      <ClockIcon class="w-4 h-4" />
+                    </span>
+                    <span v-else-if="emp.status === 'alert'" class="w-6 h-6 inline-flex items-center justify-center rounded-lg bg-rose-500/20 text-rose-400">
+                      <ExclamationTriangleIcon class="w-4 h-4" />
+                    </span>
                   </td>
                   <!-- Action aperçu -->
                   <td class="py-4 text-right">
@@ -317,7 +351,8 @@ const employees = ref([
                       @click="openPreview(emp)" 
                       class="px-3 py-1.5 bg-indigo-600/30 hover:bg-indigo-600 border border-indigo-500/50 text-indigo-200 hover:text-white rounded-xl text-[11px] font-semibold transition flex items-center gap-1.5 ml-auto cursor-pointer"
                     >
-                      <span>👁️</span> Aperçu Stagiaire
+                      <EyeIcon class="w-3.5 h-3.5" />
+                      <span>Aperçu Stagiaire</span>
                     </button>
                   </td>
                 </tr>
@@ -334,8 +369,8 @@ const employees = ref([
       <EmployeeBadges v-else-if="activeMenu === 'badges'" />
 
       <!-- MENU SECONDAIRES (ÉCRANS EN CONSTRUCTION) -->
-      <div v-else class="bg-[#131b2e]/60 border border-slate-800/80 rounded-2xl p-12 text-center text-slate-400">
-        <span class="text-4xl block mb-3">🛠️</span>
+      <div v-else class="bg-[#131b2e]/60 border border-slate-800/80 rounded-2xl p-12 text-center text-slate-400 flex flex-col items-center justify-center">
+        <WrenchScrewdriverIcon class="w-12 h-12 text-slate-600 mb-3" />
         <h3 class="text-lg font-bold text-white mb-1">Section en cours de développement</h3>
         <p class="text-xs">La vue <span class="text-indigo-400 font-mono">{{ activeMenu }}</span> sera bientôt disponible.</p>
       </div>
@@ -358,7 +393,8 @@ const employees = ref([
           @click="closePreview" 
           class="px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs transition flex items-center gap-1 cursor-pointer"
         >
-          <span>✕</span> Quitter l'aperçu
+          <XMarkIcon class="w-4 h-4" />
+          <span>Quitter l'aperçu</span>
         </button>
       </div>
 
