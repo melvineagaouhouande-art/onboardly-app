@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 
-const emit = defineEmits(['go-to-register', 'go-to-home', 'login-success'])
+const emit = defineEmits(['go-to-register', 'go-home', 'login-success'])
 
 const step = ref('credentials') // 'credentials' | 'otp'
 const showPassword = ref(false)
@@ -101,7 +101,7 @@ const handleVerifyOtp = async () => {
       <!-- Bouton Retour à l'accueil -->
       <button 
         type="button"
-        @click="$emit('go-to-home')" 
+        @click="emit('go-home')" 
         class="self-start text-slate-400 hover:text-white text-sm flex items-center space-x-2 mb-4 transition cursor-pointer"
       >
         <span>←</span>
@@ -216,7 +216,7 @@ const handleVerifyOtp = async () => {
 
         <p v-if="step === 'credentials'" class="text-slate-400 text-sm mt-6 text-center">
           Pas encore de compte ? 
-          <button type="button" @click="$emit('go-to-register')" class="text-indigo-400 hover:underline font-semibold ml-1 cursor-pointer">
+          <button type="button" @click="emit('go-to-register')" class="text-indigo-400 hover:underline font-semibold ml-1 cursor-pointer">
             S'inscrire
           </button>
         </p>
