@@ -162,7 +162,7 @@ const handleVerifyOtpAndRegister = async () => {
     <!-- 1. Image d'arrière-plan "Modern Corporate" -->
     <div 
       class="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
-      style="background-image: url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop');">
+      style="background-image: url('/images/carousel/slide1.png');">
     </div>
     
     <!-- 2. Layer d'assombrissement + effet dépoli -->
