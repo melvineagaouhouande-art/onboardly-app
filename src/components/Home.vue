@@ -12,6 +12,13 @@ import {
 } from '@heroicons/vue/24/outline'
 
 defineEmits(['go-to-login', 'go-to-register'])
+
+const scrollToSection = (id) => {
+  const el = document.getElementById(id)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' })
+  }
+}
 </script>
 
 <template>
@@ -26,17 +33,40 @@ defineEmits(['go-to-login', 'go-to-register'])
     <!-- 2. Overlay sombre + flou artistique fixe -->
     <div class="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-0"></div>
 
-    <!-- 3. EN-TÊTE FIXE -->
-    <header class="fixed top-0 left-0 right-0 z-50 border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md px-8 py-4 flex justify-center items-center shadow-lg">
-      <div class="flex items-center space-x-3.5 cursor-default group animate-float">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 p-[1.5px] shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition duration-300">
-          <div class="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center">
+    <!-- 3. EN-TÊTE AVEC LOGO À GAUCHE & MENU DE NAVIGATION -->
+    <header class="fixed top-0 left-0 right-0 z-50 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md px-6 sm:px-10 py-3.5 flex justify-between items-center shadow-xl">
+      
+      <!-- Logo et Titre à Gauche -->
+      <div @click="scrollToSection('hero')" class="flex items-center space-x-3 cursor-pointer group">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 p-[1.5px] shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition duration-300">
+          <div class="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
             <BoltIcon class="w-5 h-5 text-indigo-400 fill-indigo-400/20" />
           </div>
         </div>
-        <span class="text-2xl md:text-3xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-indigo-200 uppercase">
+        <span class="text-xl sm:text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-indigo-200 uppercase">
           Onboardly
         </span>
+      </div>
+
+      <!-- Liens du Menu de Navigation -->
+      <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
+        <button @click="scrollToSection('hero')" class="hover:text-indigo-400 transition cursor-pointer">Accueil</button>
+        <button @click="scrollToSection('features')" class="hover:text-indigo-400 transition cursor-pointer">Fonctionnalités</button>
+        <button @click="scrollToSection('security')" class="hover:text-indigo-400 transition cursor-pointer">Sécurité & Accès</button>
+      </nav>
+
+      <!-- Boutons d'Action Connexion & Inscription -->
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <button 
+          @click="$emit('go-to-login')" 
+          class="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl transition cursor-pointer">
+          Connexion
+        </button>
+        <button 
+          @click="$emit('go-to-register')" 
+          class="px-4.5 py-2 text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-md shadow-indigo-600/30 transition hover:scale-105 cursor-pointer">
+          S'inscrire
+        </button>
       </div>
     </header>
 
@@ -44,7 +74,7 @@ defineEmits(['go-to-login', 'go-to-register'])
     <div class="relative z-10">
 
       <!-- PAGE 1 : HERO (ACCUEIL) -->
-      <section class="min-h-screen flex flex-col items-center justify-center text-center px-6 max-w-4xl mx-auto pt-20">
+      <section id="hero" class="min-h-screen flex flex-col items-center justify-center text-center px-6 max-w-4xl mx-auto pt-20">
         <span class="px-4 py-1.5 rounded-full bg-indigo-500/10 text-indigo-400 text-xs sm:text-sm font-semibold border border-indigo-500/20 mb-6 backdrop-blur-sm flex items-center gap-1.5">
           <BoltIcon class="w-4 h-4" />
           <span>La plateforme d'intégration nouvelle génération</span>
@@ -64,18 +94,10 @@ defineEmits(['go-to-login', 'go-to-register'])
           <span>Commencer l'aventure</span>
           <ArrowRightIcon class="w-5 h-5" />
         </button>
-
-        <!-- Indicateur de défilement vers le bas -->
-        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-60 hover:opacity-100 transition">
-          <span class="text-xs text-slate-400 mb-1">Découvrir les fonctionnalités</span>
-          <div class="w-5 h-8 border-2 border-slate-400 rounded-full flex justify-center p-1">
-            <div class="w-1 h-2 bg-slate-400 rounded-full animate-bounce"></div>
-          </div>
-        </div>
       </section>
 
       <!-- PAGE 2 : LES 3 FONCTIONNALITÉS -->
-      <section class="min-h-screen flex flex-col items-center justify-center px-6 max-w-5xl mx-auto py-20">
+      <section id="features" class="min-h-screen flex flex-col items-center justify-center px-6 max-w-5xl mx-auto py-20">
         <h2 class="text-2xl md:text-3xl font-extrabold text-white mb-12 text-center">
           Tout ce dont vous avez besoin pour un <span class="text-indigo-400">Onboarding réussi</span>
         </h2>
@@ -116,7 +138,7 @@ defineEmits(['go-to-login', 'go-to-register'])
       </section>
 
       <!-- PAGE 3 : SÉCURITÉ & CONFIDENTIALITÉ + FOOTER -->
-      <section class="min-h-screen flex flex-col justify-between items-center px-6 max-w-4xl mx-auto pt-24 pb-6">
+      <section id="security" class="min-h-screen flex flex-col justify-between items-center px-6 max-w-4xl mx-auto pt-24 pb-6">
         
         <div class="my-auto w-full">
           <div class="w-full bg-[#1e293b]/70 border border-slate-700/60 rounded-2xl p-8 backdrop-blur-md text-left shadow-2xl">
@@ -156,12 +178,11 @@ defineEmits(['go-to-login', 'go-to-register'])
         </div>
 
         <!-- Pied de page -->
-        <footer class="w-full border-t border-slate-800/80 py-6 text-center text-xs text-slate-400 flex flex-col sm:flex-row justify-between items-center px-4">
+        <footer class="w-full border-t border-slate-800/80 py-6 text-center text-xs text-slate-400 flex justify-center items-center px-4">
           <div class="flex items-center space-x-1.5">
             <BoltIcon class="w-3.5 h-3.5 text-indigo-500 fill-indigo-500/20" />
-            <span>© 2026 <strong>Melvine</strong> · Tous droits réservés</span>
+            <span>© 2026 <strong>Onboardly</strong> · Tous droits réservés</span>
           </div>
-          <span class="mt-2 sm:mt-0 text-[11px] text-slate-500">Onboardly v2 · authentification obligatoire + RBAC</span>
         </footer>
 
       </section>
