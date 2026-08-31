@@ -16,11 +16,21 @@ const authStore = useAuthStore()
 const updateRoute = () => {
   if (authStore.isAuthenticated && authStore.currentUser) {
     const user = authStore.currentUser
+    
+    // L'Admin RH a toujours accès à son espace RH
+    if (user.role === 'admin_rh') {
+      currentScreen.value = 'rh-dashboard'
+      return
+    }
+
     if (user.statut_compte === 'en_attente') {
       currentScreen.value = 'waiting-approval'
-    } else if (user.statut_compte === 'actif') {
-      if (user.role === 'admin_rh') currentScreen.value = 'rh-dashboard'
-      else if (user.role === 'manager') currentScreen.value = 'manager-dashboard'
+    } else if (user.statut_compte === 'suspendu') {
+      alert("Votre compte a été suspendu par l'administration RH.")
+      authStore.logout()
+      currentScreen.value = 'login'
+    } else {
+      if (user.role === 'manager') currentScreen.value = 'manager-dashboard'
       else currentScreen.value = 'employee-dashboard'
     }
   } else if (!['login', 'register', 'home'].includes(currentScreen.value)) {
