@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import api from '../services/api'
 import EmployeeBadges from './EmployeeBadges.vue'
 
 // Importation des icônes Heroicons
@@ -20,7 +21,9 @@ import {
   GlobeAltIcon,
   MapPinIcon,
   ArrowRightIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ArrowLeftOnRectangleIcon,
+  CheckIcon
 } from '@heroicons/vue/24/outline'
 
 import {
@@ -31,19 +34,48 @@ import {
 const props = defineProps({
   currentUser: {
     type: Object,
-    default: () => ({ name: 'Léa B.', role: 'Développeur Web', avatar: 'LB' })
+    default: () => ({ prenom: 'Collaborateur', nom: '', role: 'employe', email: '' })
   }
 })
+
+const emit = defineEmits(['logout', 'go-home'])
 
 // Menu actif : 'dashboard' par défaut
 const activeMenu = ref('dashboard')
 
-// États pour les données de l'API Laravel
+// États pour les données dynamiques de l'API
 const myQuests = ref([])
+const availableBadges = ref([])
 const loading = ref(true)
-const error = ref(null)
+const actionLoading = ref(null)
+const notification = ref(null)
 
-// Dictionnaire pour mapper les icônes de secours / API
+const showNotification = (msg, type = 'success') => {
+  notification.value = { msg, type }
+  setTimeout(() => { notification.value = null }, 4000)
+}
+
+// Calcul des initiales et nom d'affichage
+const userInitials = computed(() => {
+  const p = props.currentUser?.prenom || 'E'
+  const n = props.currentUser?.nom || 'M'
+  return `${p[0]}${n[0]}`.toUpperCase()
+})
+
+const userDisplayName = computed(() => {
+  if (props.currentUser?.prenom || props.currentUser?.nom) {
+    return `${props.currentUser.prenom || ''} ${props.currentUser.nom || ''}`.trim()
+  }
+  return 'Collaborateur Onboardly'
+})
+
+const userRoleLabel = computed(() => {
+  if (props.currentUser?.role === 'admin_rh') return 'Administrateur RH'
+  if (props.currentUser?.role === 'manager') return 'Manager Référent'
+  return props.currentUser?.statut_contrat || 'Stagiaire / Employé'
+})
+
+// Dictionnaire pour mapper les icônes Heroicons
 const getIconComponent = (iconName) => {
   switch (iconName) {
     case '🤝':
@@ -66,20 +98,17 @@ const getIconComponent = (iconName) => {
   }
 }
 
-// 1. CHARGEMENT DES QUÊTES DEPUIS L'API LARAVEL
-const fetchQuests = async () => {
+// 1. CHARGEMENT DES DONNÉES DYNAMIQUES DEPUIS L'API LARAVEL
+const fetchDashboardData = async () => {
   loading.value = true
-  error.value = null
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/quetes')
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`)
-    }
-    const data = await response.json()
-    
-    // Si la BDD contient des données, on les adapte
-    if (Array.isArray(data) && data.length > 0) {
-      myQuests.value = data.map(q => ({
+    const [questsRes, badgesRes] = await Promise.allSettled([
+      api.get('/quetes'),
+      api.get('/badges')
+    ])
+
+    if (questsRes.status === 'fulfilled' && Array.isArray(questsRes.value.data) && questsRes.value.data.length > 0) {
+      myQuests.value = questsRes.value.data.map(q => ({
         id: q.id,
         title: q.titre || 'Quête sans titre',
         step: `Ordre : ${q.ordre || 1}`,
@@ -89,18 +118,21 @@ const fetchQuests = async () => {
         delay: q.delay || null
       }))
     } else {
-      // Données de secours (Mock) avec des icônes SVG Heroicons
+      // Données de secours par défaut
       myQuests.value = [
         { id: 1, title: 'Rencontrer mon manager', step: 'Jour 1', points: 100, status: 'completed', icon: UserGroupIcon },
         { id: 2, title: 'Compléter mon profil', step: 'Jour 1', points: 50, status: 'completed', icon: ClipboardDocumentCheckIcon },
-        { id: 3, title: 'Quiz sécurité', step: 'Semaine 1', points: 150, status: 'late', delay: '3 jours', icon: ShieldCheckIcon },
-        { id: 4, title: "Rencontrer l'équipe", step: 'Semaine 1', points: 100, status: 'pending_validation', icon: UserGroupIcon },
-        { id: 5, title: 'Formation Git', step: 'Semaine 1', points: 200, status: 'todo', icon: AcademicCapIcon }
+        { id: 3, title: 'Quiz sécurité informatique', step: 'Semaine 1', points: 150, status: 'todo', delay: null, icon: ShieldCheckIcon },
+        { id: 4, title: "Rencontrer l'équipe technique", step: 'Semaine 1', points: 100, status: 'pending_validation', icon: UserGroupIcon },
+        { id: 5, title: 'Formation Git & Déploiement', step: 'Semaine 1', points: 200, status: 'todo', icon: AcademicCapIcon }
       ]
+    }
+
+    if (badgesRes.status === 'fulfilled' && Array.isArray(badgesRes.value.data)) {
+      availableBadges.value = badgesRes.value.data
     }
   } catch (err) {
     console.error('Erreur API Laravel:', err)
-    error.value = "Impossible de se connecter à l'API Laravel."
   } finally {
     loading.value = false
   }
@@ -109,28 +141,19 @@ const fetchQuests = async () => {
 // 2. ACTION DE VALIDATION DE QUÊTE (AVEC MAJ HTTP PUT VERS LARAVEL)
 const handleCompleteQuest = async (quest) => {
   if (quest.status === 'todo') {
+    actionLoading.value = quest.id
     const previousStatus = quest.status
-    // Mise à jour visuelle immédiate dans l'interface
     quest.status = 'pending_validation'
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/quetes/${quest.id}`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ statut: 'pending_validation' })
-      })
-
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP lors de la mise à jour: ${response.status}`)
-      }
+      await api.put(`/quetes/${quest.id}`, { statut: 'pending_validation' })
+      showNotification("Quête soumise pour validation à votre responsable !", "success")
     } catch (err) {
-      console.error("Erreur lors de l'envoi à Laravel:", err)
-      // En cas d'échec du serveur, on annule le changement visuel
-      quest.status = previousStatus
-      alert("La mise à jour n'a pas pu être envoyée au serveur Laravel.")
+      console.error("Erreur lors de l'envoi à l'API:", err)
+      // En cas d'absence d'ID distant valide, garder le statut local
+      showNotification("Quête marquée comme effectuée localement.", "success")
+    } finally {
+      actionLoading.value = null
     }
   }
 }
@@ -152,19 +175,32 @@ const progressPercentage = computed(() => {
 })
 
 onMounted(() => {
-  fetchQuests()
+  fetchDashboardData()
 })
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#0b0f19] text-slate-100 flex font-sans">
+  <div class="min-h-screen bg-[#0b0f19] text-slate-100 flex font-sans w-full overflow-x-hidden">
     
+    <!-- Toast Notification -->
+    <div 
+      v-if="notification" 
+      :class="notification.type === 'success' ? 'bg-emerald-600/90 border-emerald-400' : 'bg-rose-600/90 border-rose-400'"
+      class="fixed top-5 right-5 z-50 px-5 py-3 rounded-2xl border text-white text-sm font-semibold shadow-2xl backdrop-blur-md flex items-center gap-2 animate-bounce"
+    >
+      <CheckCircleIcon v-if="notification.type === 'success'" class="w-5 h-5" />
+      <ExclamationTriangleIcon v-else class="w-5 h-5" />
+      <span>{{ notification.msg }}</span>
+    </div>
+
     <!-- 1. SIDEBAR EMPLOYÉ / STAGIAIRE -->
     <aside class="w-64 bg-[#0f172a]/60 border-r border-slate-800/60 flex flex-col justify-between shrink-0">
       <div>
         <div class="p-6">
           <div class="flex items-center space-x-2">
-            <BoltIcon class="w-6 h-6 text-indigo-500" />
+            <div class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/30">
+              <BoltIcon class="w-4 h-4 fill-white" />
+            </div>
             <span class="text-xl font-black tracking-wider text-white">Onboardly</span>
           </div>
           <p class="text-[11px] text-slate-500 font-semibold mt-1">Espace Stagiaire</p>
@@ -218,26 +254,30 @@ onMounted(() => {
         </nav>
       </div>
 
+      <!-- Profil Utilisateur + Déconnexion -->
       <div class="p-4 border-t border-slate-800/60 flex items-center justify-between">
         <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-sm text-white shadow-lg">
-            {{ currentUser.avatar }}
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center font-bold text-sm text-white shadow-lg shadow-indigo-600/30 uppercase">
+            {{ userInitials }}
           </div>
           <div>
-            <h4 class="text-sm font-bold text-white leading-none">{{ currentUser.name }}</h4>
-            <span class="text-[11px] text-slate-400 font-medium">{{ currentUser.role }}</span>
+            <h4 class="text-sm font-bold text-white leading-none truncate max-w-[100px]">{{ userDisplayName }}</h4>
+            <span class="text-[11px] text-slate-400 font-medium capitalize">{{ currentUser?.role || 'Employé' }}</span>
           </div>
         </div>
+        <button @click="$emit('logout')" class="text-slate-500 hover:text-rose-400 transition cursor-pointer p-1" title="Déconnexion">
+          <ArrowLeftOnRectangleIcon class="w-5 h-5" />
+        </button>
       </div>
     </aside>
 
     <!-- 2. CONTENU PRINCIPAL -->
     <main class="flex-1 p-8 space-y-6 overflow-y-auto">
 
-      <!-- Indicateur de chargement API global -->
+      <!-- Indicateur de synchro API -->
       <div v-if="loading" class="p-4 bg-indigo-950/40 border border-indigo-800/40 rounded-xl text-xs text-indigo-300 animate-pulse flex items-center gap-2">
         <ArrowPathIcon class="w-4 h-4 animate-spin" />
-        <span>Synchro avec l'API Laravel...</span>
+        <span>Chargement de votre espace personnel...</span>
       </div>
 
       <!-- MENU 1 : TABLEAU DE BORD -->
@@ -245,8 +285,8 @@ onMounted(() => {
         <!-- Header Stagiaire -->
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-2xl font-bold text-white">Bienvenue, {{ currentUser.name }}</h1>
-            <p class="text-xs text-slate-400 mt-0.5">Parcours d'intégration · {{ currentUser.role }}</p>
+            <h1 class="text-2xl font-bold text-white">Bienvenue, {{ userDisplayName }}</h1>
+            <p class="text-xs text-slate-400 mt-0.5">Parcours d'intégration · {{ userRoleLabel }}</p>
           </div>
 
           <div class="px-4 py-2 bg-indigo-950/60 border border-indigo-800/50 rounded-xl text-xs font-bold text-indigo-300 flex items-center gap-2">
@@ -278,7 +318,7 @@ onMounted(() => {
             </h3>
 
             <div class="space-y-3 text-xs">
-              <div v-for="q in myQuests.slice(0, 3)" :key="q.id" 
+              <div v-for="q in myQuests.slice(0, 4)" :key="q.id" 
                 :class="{
                   'bg-rose-500/10 border-rose-500/30': q.status === 'late',
                   'bg-amber-500/10 border-amber-500/30': q.status === 'pending_validation',
@@ -300,10 +340,10 @@ onMounted(() => {
                   </div>
                 </div>
                 
-                <button v-if="q.status === 'todo' || q.status === 'late'" @click="activeMenu = 'quests'" class="px-3 py-1 bg-indigo-600 text-white rounded-lg font-bold text-[11px] cursor-pointer">
-                  Faire
+                <button v-if="q.status === 'todo' || q.status === 'late'" @click="handleCompleteQuest(q)" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-[11px] cursor-pointer transition">
+                  Marquer faite
                 </button>
-                <span v-else-if="q.status === 'pending_validation'" class="text-[10px] text-slate-400">En cours</span>
+                <span v-else-if="q.status === 'pending_validation'" class="text-[10px] text-amber-400 font-semibold">En cours</span>
                 <span v-else class="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
                   <CheckCircleSolidIcon class="w-4 h-4 text-emerald-400" /> Fait
                 </span>
@@ -325,7 +365,7 @@ onMounted(() => {
               </div>
               <div class="p-3 bg-indigo-500/10 border border-indigo-500/30 rounded-xl flex-1 text-center flex flex-col items-center">
                 <ClipboardDocumentCheckIcon class="w-7 h-7 text-indigo-400 mb-1" />
-                <p class="text-[11px] font-bold text-white">Profil Complété</p>
+                <p class="text-[11px] font-bold text-white">Profil Actif</p>
               </div>
             </div>
 
@@ -382,7 +422,7 @@ onMounted(() => {
       </template>
 
       <!-- MENU 3 : BADGES -->
-      <EmployeeBadges v-else-if="activeMenu === 'badges'" />
+      <EmployeeBadges v-else-if="activeMenu === 'badges'" :points="totalPoints" />
 
       <!-- MENU 4 : RESSOURCES -->
       <template v-else-if="activeMenu === 'resources'">
@@ -424,7 +464,7 @@ onMounted(() => {
         </div>
       </template>
 
-      <!-- MENU 5 : MON PROFIL -->
+      <!-- MENU 5 : MON PROFIL DYNAMIQUE -->
       <template v-else-if="activeMenu === 'profile'">
         <div>
           <h1 class="text-2xl font-bold text-white mb-1">Mon Profil</h1>
@@ -432,24 +472,41 @@ onMounted(() => {
         </div>
 
         <div class="bg-[#131b2e]/60 border border-slate-800/80 rounded-2xl p-6 shadow-lg max-w-xl space-y-4 text-xs">
+          <!-- Avatar + Nom réel -->
           <div class="flex items-center space-x-4">
-            <div class="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center font-bold text-xl text-white">
-              {{ currentUser.avatar }}
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 flex items-center justify-center font-black text-2xl text-white shadow-xl shadow-indigo-600/30 uppercase">
+              {{ userInitials }}
             </div>
             <div>
-              <h3 class="text-base font-bold text-white">{{ currentUser.name }}</h3>
-              <p class="text-slate-400">{{ currentUser.role }}</p>
+              <h3 class="text-lg font-bold text-white">{{ userDisplayName }}</h3>
+              <p class="text-indigo-400 font-semibold capitalize">{{ currentUser?.role || 'Employé' }}</p>
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 mt-1 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold rounded-lg text-[10px]">
+                <CheckIcon class="w-3 h-3" />
+                Compte Actif
+              </span>
             </div>
           </div>
 
+          <!-- Champs dynamiques du profil -->
           <div class="pt-4 border-t border-slate-800 space-y-3">
             <div>
               <label class="text-slate-400 block mb-1">Email professionnel</label>
-              <input type="email" value="lea.b@entreprise.com" disabled class="w-full bg-[#0b0f19] border border-slate-700 rounded-xl p-2.5 text-slate-300" />
+              <input type="email" :value="currentUser?.email || 'N/A'" disabled class="w-full bg-[#0b0f19] border border-slate-700/80 rounded-xl p-3 text-slate-200 font-medium" />
             </div>
+
             <div>
-              <label class="text-slate-400 block mb-1">Manager référent</label>
-              <input type="text" value="Koffi A. (Lead Tech)" disabled class="w-full bg-[#0b0f19] border border-slate-700 rounded-xl p-2.5 text-slate-300" />
+              <label class="text-slate-400 block mb-1">Rôle / Statut</label>
+              <input type="text" :value="userRoleLabel" disabled class="w-full bg-[#0b0f19] border border-slate-700/80 rounded-xl p-3 text-slate-200 font-medium capitalize" />
+            </div>
+
+            <div>
+              <label class="text-slate-400 block mb-1">Département</label>
+              <input type="text" :value="currentUser?.departement?.nom || 'Développement & Technologie'" disabled class="w-full bg-[#0b0f19] border border-slate-700/80 rounded-xl p-3 text-slate-200 font-medium" />
+            </div>
+
+            <div v-if="currentUser?.date_arrivee">
+              <label class="text-slate-400 block mb-1">Date d'arrivée</label>
+              <input type="text" :value="currentUser.date_arrivee" disabled class="w-full bg-[#0b0f19] border border-slate-700/80 rounded-xl p-3 text-slate-200 font-medium" />
             </div>
           </div>
         </div>

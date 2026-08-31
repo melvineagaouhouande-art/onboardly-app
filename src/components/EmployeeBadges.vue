@@ -11,7 +11,12 @@ import {
   TrophyIcon
 } from '@heroicons/vue/24/outline'
 
-const points = ref(1240)
+const props = defineProps({
+  points: {
+    type: Number,
+    default: 150
+  }
+})
 
 const unlockedBadges = ref([
   { id: 1, name: 'Bienvenue à Bord', icon: SparklesIcon, bgColor: 'bg-emerald-500/20 text-emerald-400' },
